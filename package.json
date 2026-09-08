@@ -1,0 +1,7 @@
+{
+  "name": "xai-syllabus-helper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI 활용 강의계획서 도우미 - 연성대학교 X+AI 사업",
+  "engines": { "node": ">=18" }
+}
