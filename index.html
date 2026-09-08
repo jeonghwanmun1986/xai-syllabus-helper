@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 활용 강의계획서 도우미</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --ink:#1E2438;
+    --ink-soft:#4B5368;
+    --paper:#EEF1F6;
+    --surface:#FFFFFF;
+    --surface-2:#F5F7FA;
+    --accent:#3B4B9E;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E7EAF9;
+    --seal:#A6363B;
+    --seal-soft:#F6E7E6;
+    --line:#D8DDE7;
+    --line-strong:#B9C0D1;
+    --shadow: 0 1px 2px rgba(30,36,56,.06), 0 8px 24px -12px rgba(30,36,56,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#E7E9F3; --ink-soft:#A7ADC2; --paper:#12141F; --surface:#1A1D2B; --surface-2:#20243480;
+      --accent:#8792E8; --accent-ink:#12141F; --accent-soft:#262B47; --seal:#E08A8A; --seal-soft:#33232A;
+      --line:#2B3049; --line-strong:#3A4062; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#E7E9F3; --ink-soft:#A7ADC2; --paper:#12141F; --surface:#1A1D2B; --surface-2:#20243480;
+    --accent:#8792E8; --accent-ink:#12141F; --accent-soft:#262B47; --seal:#E08A8A; --seal-soft:#33232A;
+    --line:#2B3049; --line-strong:#3A4062; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:auto; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Noto Sans KR", system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  h1,h2,h3{ font-family:"Noto Serif KR","Noto Sans KR",serif; text-wrap:balance; margin:0; }
+  code, .mono{ font-family:"JetBrains Mono", ui-monospace, monospace; }
+  button{ font-family:inherit; }
+
+  .app{ max-width:1040px; margin:0 auto; padding:28px 20px 80px; }
+
+  header.top{ margin-bottom:22px; }
+  .title-row{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:0;
+  }
+  .title-block h1{ font-size:22px; font-weight:700; letter-spacing:-.01em; }
+  .title-block .eyebrow{
+    font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent);
+    font-weight:600; margin-bottom:4px; display:block;
+  }
+  .subtitle{ margin:8px 0 0; color:var(--ink-soft); font-size:13.5px; max-width:62ch; line-height:1.6; }
+
+  .tabs{ display:flex; gap:2px; }
+  .tab{
+    appearance:none; border:1px solid var(--line); border-bottom:none;
+    background:var(--surface-2); color:var(--ink-soft);
+    padding:9px 18px; font-size:13.5px; font-weight:600; cursor:pointer;
+    border-radius:8px 8px 0 0; position:relative; top:1px;
+  }
+  .tab.active{ background:var(--surface); color:var(--ink); border-color:var(--line-strong); box-shadow: 0 -2px 0 var(--accent) inset; }
+  .tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  main[hidden]{ display:none; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:20px 22px; box-shadow:var(--shadow); margin-top:18px;
+  }
+  .card h2{ font-size:15.5px; font-weight:700; }
+  .card .hint{ color:var(--ink-soft); font-size:12.5px; margin-top:3px; line-height:1.55; }
+  .step-num{
+    display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+    border-radius:50%; background:var(--accent); color:var(--accent-ink); font-size:11px; font-weight:700;
+    margin-right:8px; flex-shrink:0;
+  }
+  .card-head{ display:flex; align-items:center; }
+
+  .field-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; }
+  .field{ display:flex; flex-direction:column; gap:6px; flex:1 1 220px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-soft); }
+  select, input[type=text], input[type=number], textarea{
+    font-family:inherit; font-size:13.5px; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line); border-radius:8px;
+    padding:9px 11px; width:100%;
+  }
+  select:focus, input:focus, textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+  textarea{ resize:vertical; font-size:13px; line-height:1.55; }
+  .field.narrow{ flex:0 1 110px; }
+
+  .course-card{
+    margin-top:14px; padding:14px 16px; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .course-card .dept-tag{
+    font-size:11px; font-weight:700; background:var(--accent-soft); color:var(--accent);
+    padding:3px 9px; border-radius:999px; letter-spacing:.02em;
+  }
+  .course-card .name{ font-weight:700; font-size:14.5px; }
+  .course-card .desc{ color:var(--ink-soft); font-size:12.5px; flex-basis:100%; line-height:1.5; }
+  .course-card .empty{ color:var(--ink-soft); font-size:13px; }
+
+  .btn{
+    appearance:none; border:1px solid var(--line-strong); background:var(--surface);
+    color:var(--ink); font-size:13px; font-weight:600; padding:9px 16px; border-radius:8px;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:filter .1s;
+  }
+  .btn:hover{ filter:brightness(0.97); }
+  @media (prefers-color-scheme:dark){ .btn:hover{ filter:brightness(1.15); } }
+  :root[data-theme="dark"] .btn:hover{ filter:brightness(1.15); }
+  .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn.seal{ background:var(--seal-soft); color:var(--seal); border-color:var(--seal-soft); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.small{ padding:6px 11px; font-size:12px; }
+  .btn.ghost{ background:transparent; }
+  .actions{ margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+  .spinner{
+    width:13px; height:13px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent;
+    animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .spinner{ animation-duration:1.4s; } }
+
+  .msg{ font-size:12.5px; margin-top:10px; padding:9px 12px; border-radius:8px; line-height:1.5; }
+  .msg.info{ background:var(--accent-soft); color:var(--accent); }
+  .msg.error{ background:var(--seal-soft); color:var(--seal); }
+  .msg.saved{ background:var(--accent-soft); color:var(--accent); }
+
+  .tool-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:10px; margin-top:14px; }
+  .tool-card{ background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .tool-card .name{ font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:6px; }
+  .tool-card .use{ font-size:12px; color:var(--ink); margin-top:6px; line-height:1.5; }
+  .tool-card .reason{ font-size:11.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5; font-style:italic; }
+  .rationale{ margin-top:12px; font-size:12.5px; color:var(--ink-soft); line-height:1.6; border-left:2px solid var(--accent); padding-left:11px; }
+
+  .objective-box{ margin-top:14px; }
+  .objective-box textarea{ background:var(--surface-2); font-size:13.5px; line-height:1.7; }
+
+  .week-toolbar{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .week-count{ font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  .week-count b{ color:var(--accent); }
+  .week-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(46px,1fr)); gap:8px; margin-top:12px; }
+  .week-btn{
+    aspect-ratio:1; border:1px solid var(--line); background:var(--surface-2); color:var(--ink);
+    border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .week-btn.recommended:not(.selected){ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .week-btn.selected{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .week-btn:disabled{ opacity:.35; cursor:not-allowed; }
+
+  .result-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:14px; margin-top:16px; }
+  .week-result{ border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface); }
+  .week-result .wk-head{
+    background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:700;
+    padding:8px 13px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .week-result .wk-head .topic{ font-weight:500; opacity:.9; font-size:11.5px; text-align:right; }
+  .week-result .wk-body{ padding:12px 13px 13px; display:flex; flex-direction:column; gap:10px; }
+  .wk-field label{ font-size:10.5px; font-weight:700; color:var(--ink-soft); letter-spacing:.03em; text-transform:uppercase; display:block; margin-bottom:4px; }
+  .wk-field textarea{ background:var(--surface-2); }
+
+  .history-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .history-row{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--surface-2);
+    border:1px solid var(--line); border-radius:8px; font-size:12.5px; flex-wrap:wrap;
+  }
+  .history-row .weeks{ color:var(--ink-soft); }
+  .history-row .date{ margin-left:auto; color:var(--ink-soft); font-size:11.5px; }
+
+  .stat-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; }
+  .stat-tile{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow); }
+  .stat-tile .num{ font-size:26px; font-weight:700; font-family:"Noto Serif KR",serif; }
+  .stat-tile .label{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+
+  table.data{ width:100%; border-collapse:collapse; margin-top:14px; font-size:13px; }
+  table.data th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); border-bottom:1px solid var(--line-strong); padding:6px 10px; }
+  table.data td{ border-bottom:1px solid var(--line); padding:8px 10px; vertical-align:top; }
+  table.data tr:last-child td{ border-bottom:none; }
+  .table-wrap{ overflow-x:auto; }
+  td.dept-cell{ white-space:nowrap; }
+  .row-input{ width:100%; border:1px solid transparent; background:transparent; padding:4px 6px; border-radius:5px; font-size:13px; color:var(--ink); font-family:inherit; }
+  .row-input:hover, .row-input:focus{ border-color:var(--line); background:var(--surface-2); }
+
+  .example-tag, .local-tag{ font-size:9.5px; color:var(--seal); border:1px solid var(--seal); border-radius:5px; padding:1px 5px; margin-left:6px; vertical-align:middle; }
+  .local-tag{ color:var(--accent); border-color:var(--accent); }
+
+  footer.note{ margin-top:26px; font-size:11.5px; color:var(--ink-soft); text-align:center; line-height:1.6; }
+
+  @media (max-width:600px){
+    .title-row{ flex-direction:column; align-items:flex-start; }
+    .app{ padding:20px 14px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="title-row">
+      <div class="title-block">
+        <span class="eyebrow">연성대학교 · X+AI 사업</span>
+        <h1>AI 활용 강의계획서 도우미</h1>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-role="head" role="tab" aria-selected="true">학과장 화면</button>
+        <button class="tab" data-role="admin" role="tab" aria-selected="false">관리자 화면</button>
+      </div>
+    </div>
+    <p class="subtitle">AID 지정 교과목을 선택하면 ① 어울리는 AI 툴을 제안하고, ② X+AI 사업용 교육목표 문단을 작성하고, ③ AI 활용을 반영할 5개 주차를 패턴·랜덤으로 골라 각 주차에 덧붙일 한두 줄 제안 문장을 만듭니다. 교수님은 이 내용을 기존 강의계획서에 옮겨 적어 보완하시면 됩니다.</p>
+  </header>
+
+  <div id="capability-banner"></div>
+
+  <!-- ============ 학과장 화면 ============ -->
+  <main id="view-head">
+
+    <section class="card" id="card-select">
+      <div class="card-head"><span class="step-num">1</span><h2>학과·교과목 선택</h2></div>
+      <p class="hint">먼저 학과와 AID 사업 대상 교과목을 선택하세요. 목록에 없는 교과목은 관리자 화면에서 추가할 수 있습니다.</p>
+      <div class="field-row">
+        <div class="field">
+          <label for="sel-dept">학과</label>
+          <select id="sel-dept"><option value="">불러오는 중…</option></select>
+        </div>
+        <div class="field">
+          <label for="sel-course">AID 대상 교과목</label>
+          <select id="sel-course"><option value="">학과를 먼저 선택하세요</option></select>
+        </div>
+        <div class="field narrow"><label for="in-credit">학점 (선택)</label><input type="number" id="in-credit" min="1" max="6"></div>
+        <div class="field narrow"><label for="in-hours">시수 (선택)</label><input type="number" id="in-hours" min="1" max="90"></div>
+        <div class="field narrow">
+          <label for="in-weeks">총 강의 주차</label>
+          <input type="number" id="in-weeks" min="8" max="20" value="15">
+        </div>
+      </div>
+      <div class="course-card" id="course-card"><span class="empty">교과목을 선택하면 상세 정보가 표시됩니다.</span></div>
+    </section>
+
+    <section class="card" id="card-suggest">
+      <div class="card-head"><span class="step-num">2</span><h2>AI 활용 아이디어 제안</h2></div>
+      <p class="hint">선택한 교과목 특성을 바탕으로 활용하기 좋은 AI 툴과, AI 활용을 넣기 좋은 주차 패턴을 제안받습니다.</p>
+      <div class="actions">
+        <button class="btn primary" id="btn-suggest" disabled>이 교과목에 맞는 AI 활용 제안 받기</button>
+      </div>
+      <div id="suggest-msg"></div>
+      <div id="suggest-result" hidden>
+        <div class="tool-grid" id="tool-grid"></div>
+        <p class="rationale" id="rationale"></p>
+      </div>
+    </section>
+
+    <section class="card" id="card-objective">
+      <div class="card-head"><span class="step-num">3</span><h2>교과목 교육목표 작성</h2></div>
+      <p class="hint">학과·교과목 특성과 추천 AI 툴(2번 결과가 있으면 함께 반영)을 바탕으로, X+AI 사업 서식의 교육목표 문단을 작성합니다.</p>
+      <div class="actions">
+        <button class="btn primary" id="btn-objective" disabled>교육목표 작성</button>
+        <button class="btn small" id="btn-copy-objective" hidden>복사</button>
+      </div>
+      <div id="objective-msg"></div>
+      <div class="objective-box" id="objective-box" hidden>
+        <textarea id="objective-text" rows="5"></textarea>
+      </div>
+    </section>
+
+    <section class="card" id="card-weeks">
+      <div class="card-head"><span class="step-num">4</span><h2>AI 활용 반영 주차(5개)와 제안 문구</h2></div>
+      <p class="hint">AI 활용을 반영할 5개 주차를 패턴(2번의 AI 추천 기반) 또는 랜덤으로 고른 뒤, 각 주차에 예상되는 학습내용과 AI를 어떻게 붙여 쓰면 좋을지 한두 줄 제안 문장을 생성합니다. 필요하면 주차를 직접 클릭해 바꿀 수 있습니다.</p>
+      <div class="actions">
+        <button class="btn" id="btn-apply-pattern">패턴으로 5개 선택</button>
+        <button class="btn" id="btn-random-weeks">🎲 랜덤으로 5개 선택</button>
+      </div>
+      <div class="week-toolbar">
+        <span class="week-count"><b id="week-count-num">0</b>/5 주차 선택됨</span>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-generate" disabled>선택한 5개 주차 제안 문구 생성</button>
+        <button class="btn small" id="btn-copy-all" hidden>전체 복사 (교육목표 + 주차별 제안)</button>
+      </div>
+      <div id="generate-msg"></div>
+      <div class="result-grid" id="result-grid"></div>
+    </section>
+
+    <section class="card" id="card-history" hidden>
+      <div class="card-head"><h2>이 교과목의 이전 생성 이력 (이 브라우저 저장)</h2></div>
+      <div class="history-list" id="history-list"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ 관리자 화면 ============ -->
+  <main id="view-admin" hidden>
+
+    <section class="stat-row">
+      <div class="stat-tile"><div class="num" id="stat-depts">–</div><div class="label">등록 학과 수</div></div>
+      <div class="stat-tile"><div class="num" id="stat-courses">–</div><div class="label">AID 대상 교과목 수</div></div>
+      <div class="stat-tile"><div class="num" id="stat-results">–</div><div class="label">생성된 이력 (이 브라우저)</div></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>데이터 관리</h2></div>
+      <p class="hint">
+        공식 교과목 목록은 <code>courses.json</code>입니다. 아래에서 즉석으로 추가·수정·삭제한 내용은 <b>이 브라우저에만</b> 저장됩니다.
+        모든 방문자에게 반영하려면 "courses.json 내보내기"로 받은 파일로 저장소의 <code>courses.json</code>을 교체하고 커밋·재배포하세요.
+      </p>
+      <div class="actions">
+        <button class="btn" id="btn-export-courses">courses.json 내보내기</button>
+        <button class="btn" id="btn-export-history">이력 내보내기 (JSON)</button>
+      </div>
+      <div id="data-msg"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>교과목 추가</h2></div>
+      <p class="hint">학과별 AID 사업 대상 교과목을 하나씩 추가합니다. 설명을 입력하면 AI 제안의 정확도가 높아집니다.</p>
+      <div class="field-row">
+        <div class="field"><label for="a-dept">학과</label><input type="text" id="a-dept" placeholder="예: 전자공학과" list="dept-list"><datalist id="dept-list"></datalist></div>
+        <div class="field"><label for="a-name">교과목명</label><input type="text" id="a-name" placeholder="예: C언어 응용실습"></div>
+        <div class="field"><label for="a-desc">설명 (선택)</label><input type="text" id="a-desc" placeholder="예: 함수·포인터 중심의 C언어 실습 교과목"></div>
+      </div>
+      <div class="actions"><button class="btn primary" id="btn-add-course">교과목 추가</button></div>
+      <div id="admin-msg"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>일괄 붙여넣기로 추가</h2></div>
+      <p class="hint">스프레드시트에서 <b>학과, 교과목명, 설명(선택)</b> 열을 복사해 붙여넣으세요. 탭 또는 쉼표로 구분된 줄 단위 데이터를 인식합니다.</p>
+      <textarea id="bulk-input" rows="4" placeholder="전자공학과	VHDL실습
+전자공학과	융합전자종합설계1
+정보통신과	창의공학실습1"></textarea>
+      <div class="actions">
+        <button class="btn" id="btn-bulk-preview">미리보기</button>
+        <button class="btn primary" id="btn-bulk-add" hidden>표시된 항목 추가</button>
+      </div>
+      <div id="bulk-preview"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>등록된 교과목 목록</h2></div>
+      <p class="hint">셀을 클릭해 바로 수정할 수 있습니다. <span class="local-tag">로컬</span>은 이 브라우저에서 새로 추가한 항목입니다.</p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th style="width:16%">학과</th><th style="width:24%">교과목명</th><th>설명</th><th style="width:60px"></th></tr></thead>
+          <tbody id="course-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>전체 생성 이력 (이 브라우저)</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>학과</th><th>교과목명</th><th>반영 주차</th><th>생성일</th></tr></thead>
+          <tbody id="all-history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="note">교육혁신본부 · X+AI 지정 교과목 강의계획서 지원 도구 — 생성된 내용은 반드시 검토 후 강의계획서에 반영하세요.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WEEKS_TARGET = 5;
+  var LS_OVERRIDES = "xai_course_overrides_v1";
+  var LS_HISTORY = "xai_history_v1";
+
+  // ---------- State ----------
+  var baseCourses = [];   // from courses.json
+  var courses = [];       // effective (base + local overrides)
+  var selectedCourseId = "";
+  var totalWeeks = 15;
+  var chosenWeeks = new Set();
+  var recommendedWeeks = [];
+  var lastTools = [];
+  var objectiveText = "";
+  var lastWeekly = null;
+  var generating = false, suggesting = false, writingObjective = false;
+
+  function $(id){ return document.getElementById(id); }
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function escapeHtml(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  // ---------- localStorage helpers ----------
+  function readLS(key, fallback){
+    try{
+      var raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    }catch(e){ return fallback; }
+  }
+  function writeLS(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ /* ignore (private mode etc.) */ }
+  }
+
+  function loadOverrides(){
+    var o = readLS(LS_OVERRIDES, null);
+    if (!o || typeof o !== "object") o = {};
+    if (!Array.isArray(o.added)) o.added = [];
+    if (!o.edited || typeof o.edited !== "object") o.edited = {};
+    if (!Array.isArray(o.deleted)) o.deleted = [];
+    return o;
+  }
+  var overrides = loadOverrides();
+  function saveOverrides(){ writeLS(LS_OVERRIDES, overrides); }
+
+  function computeEffectiveCourses(){
+    var list = baseCourses
+      .filter(function(c){ return overrides.deleted.indexOf(c.id) === -1; })
+      .map(function(c){
+        var e = overrides.edited[c.id];
+        return e ? Object.assign({}, c, e) : c;
+      });
+    var added = overrides.added.filter(function(c){ return overrides.deleted.indexOf(c.id) === -1; });
+    return list.concat(added);
+  }
+
+  function loadHistoryAll(){ return readLS(LS_HISTORY, []); }
+  function saveHistoryAll(list){ writeLS(LS_HISTORY, list); }
+
+  // ---------- Role tabs ----------
+  var tabs = document.querySelectorAll(".tab");
+  var viewHead = $("view-head"), viewAdmin = $("view-admin");
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.classList.remove("active"); x.setAttribute("aria-selected","false"); });
+      t.classList.add("active"); t.setAttribute("aria-selected","true");
+      var isAdmin = t.dataset.role === "admin";
+      viewHead.hidden = isAdmin; viewAdmin.hidden = !isAdmin;
+      if (isAdmin) renderAdmin();
+    });
+  });
+
+  // ---------- Copy helper ----------
+  function copyText(text, btn){
+    function done(ok){
+      if (!btn) return;
+      var orig = btn.textContent;
+      btn.textContent = ok ? "복사됨 ✓" : "복사 실패";
+      setTimeout(function(){ btn.textContent = orig; }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, done){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(ok);
+    } catch(e){ done(false); }
+  }
+
+  // ---------- API helper ----------
+  function apiCall(path, payload){
+    return fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(resp){
+      return resp.json().catch(function(){ return {}; }).then(function(data){
+        if (!resp.ok || data.error){
+          var err = new Error((data && data.message) || ("요청 실패 (" + resp.status + ")"));
+          err.code = data && data.error;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+  function apiErrorMessage(e){
+    if (e && e.code === "missing_api_key") return "이 배포에는 아직 Anthropic API 키가 설정되지 않았습니다. Vercel 프로젝트에 ANTHROPIC_API_KEY를 추가해 주세요 (README 참고).";
+    return (e && e.message) || "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+  }
+
+  // ---------- Capability banner ----------
+  function showBanner(text){
+    var b = $("capability-banner");
+    b.innerHTML = "";
+    if (!text) return;
+    var d = el("div", "msg error", text);
+    d.style.marginBottom = "4px";
+    b.appendChild(d);
+  }
+
+  // ============================================================
+  // 학과장 화면 — Step 1: 학과/교과목 선택
+  // ============================================================
+  var selDept = $("sel-dept"), selCourse = $("sel-course"), inWeeks = $("in-weeks"), inCredit = $("in-credit"), inHours = $("in-hours");
+
+  function renderDeptOptions(){
+    var depts = Array.from(new Set(courses.map(function(c){ return c.dept; }))).filter(Boolean);
+    depts.sort(function(a,b){ return a.localeCompare(b, "ko"); });
+    var prev = selDept.value;
+    selDept.innerHTML = "";
+    if (!depts.length){
+      selDept.appendChild(new Option("등록된 학과가 없습니다", ""));
+      selCourse.innerHTML = ""; selCourse.appendChild(new Option("관리자 화면에서 교과목을 추가하세요", ""));
+      renderCourseCard(null);
+      return;
+    }
+    selDept.appendChild(new Option("학과 선택", ""));
+    depts.forEach(function(d){ selDept.appendChild(new Option(d, d)); });
+    if (depts.indexOf(prev) !== -1) selDept.value = prev; else selDept.value = depts[0];
+    renderCourseOptions();
+  }
+
+  function renderCourseOptions(){
+    var dept = selDept.value;
+    var list = courses.filter(function(c){ return c.dept === dept; });
+    var prevId = selCourse.value;
+    selCourse.innerHTML = "";
+    if (!list.length){
+      selCourse.appendChild(new Option("이 학과에 등록된 교과목이 없습니다", ""));
+      renderCourseCard(null);
+      return;
+    }
+    selCourse.appendChild(new Option("교과목 선택", ""));
+    list.forEach(function(c){ selCourse.appendChild(new Option(c.name, c.id)); });
+    var keep = list.some(function(c){ return c.id === prevId; });
+    selCourse.value = keep ? prevId : list[0].id;
+    onCourseChange();
+  }
+
+  function currentCourse(){
+    return courses.find(function(c){ return c.id === selectedCourseId; }) || null;
+  }
+
+  function renderCourseCard(c){
+    var card = $("course-card");
+    card.innerHTML = "";
+    if (!c){
+      card.appendChild(el("span", "empty", "교과목을 선택하면 상세 정보가 표시됩니다."));
+      return;
+    }
+    var tag = el("span", "dept-tag", c.dept);
+    var name = el("span", "name", c.name);
+    card.appendChild(tag); card.appendChild(name);
+    if (c.desc) card.appendChild(el("div", "desc", c.desc));
+  }
+
+  function resetDownstream(){
+    $("suggest-result").hidden = true;
+    $("suggest-msg").innerHTML = "";
+    $("tool-grid").innerHTML = "";
+    $("rationale").textContent = "";
+    lastTools = []; recommendedWeeks = [];
+
+    objectiveText = "";
+    $("objective-box").hidden = true;
+    $("objective-text").value = "";
+    $("objective-msg").innerHTML = "";
+    $("btn-copy-objective").hidden = true;
+
+    chosenWeeks = new Set();
+    lastWeekly = null;
+    $("result-grid").innerHTML = "";
+    $("generate-msg").innerHTML = "";
+    $("btn-copy-all").hidden = true;
+    renderWeekGrid();
+
+    $("card-history").hidden = true;
+    $("history-list").innerHTML = "";
+    if (selectedCourseId) loadHistory();
+  }
+
+  function onCourseChange(){
+    selectedCourseId = selCourse.value;
+    var c = currentCourse();
+    renderCourseCard(c);
+    $("btn-suggest").disabled = !c;
+    $("btn-objective").disabled = !c;
+    resetDownstream();
+  }
+
+  selDept.addEventListener("change", renderCourseOptions);
+  selCourse.addEventListener("change", onCourseChange);
+  inWeeks.addEventListener("change", function(){
+    var v = parseInt(inWeeks.value, 10);
+    if (isNaN(v) || v < 8) v = 8;
+    if (v > 20) v = 20;
+    totalWeeks = v; inWeeks.value = v;
+    chosenWeeks = new Set();
+    renderWeekGrid();
+  });
+
+  // ============================================================
+  // Step 2 — AI 툴/패턴 제안
+  // ============================================================
+  $("btn-suggest").addEventListener("click", function(){
+    var c = currentCourse();
+    if (!c || suggesting) return;
+    suggesting = true;
+    var btn = $("btn-suggest");
+    var origLabel = btn.textContent;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> AI가 구상 중… (최대 1분 소요)';
+    $("suggest-msg").innerHTML = "";
+    $("suggest-result").hidden = true;
+
+    apiCall("/api/suggest", { dept: c.dept, name: c.name, desc: c.desc, totalWeeks: totalWeeks })
+      .then(function(data){
+        lastTools = Array.isArray(data && data.tools) ? data.tools : [];
+        recommendedWeeks = Array.isArray(data && data.recommendedWeeks) ? data.recommendedWeeks : [];
+        renderToolGrid();
+        $("rationale").textContent = (data && data.rationale) || "";
+        $("suggest-result").hidden = false;
+        renderWeekGrid();
+      })
+      .catch(function(e){
+        $("suggest-msg").innerHTML = '<div class="msg error">' + escapeHtml(apiErrorMessage(e)) + '</div>';
+      })
+      .finally(function(){
+        suggesting = false;
+        btn.disabled = !currentCourse();
+        btn.textContent = origLabel;
+      });
+  });
+
+  function renderToolGrid(){
+    var grid = $("tool-grid");
+    grid.innerHTML = "";
+    lastTools.forEach(function(t){
+      var card = el("div", "tool-card");
+      var name = el("div", "name");
+      name.textContent = "🔹 " + (t.name || "AI 툴");
+      var use = el("div", "use", t.use || "");
+      var reason = el("div", "reason", t.reason || "");
+      card.appendChild(name); card.appendChild(use); card.appendChild(reason);
+      grid.appendChild(card);
+    });
+  }
+
+  // ============================================================
+  // Step 3 — 교육목표 작성
+  // ============================================================
+  $("btn-objective").addEventListener("click", function(){
+    var c = currentCourse();
+    if (!c || writingObjective) return;
+    writingObjective = true;
+    var btn = $("btn-objective"); var orig = btn.textContent;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 교육목표 작성 중…';
+    $("objective-msg").innerHTML = "";
+
+    var toolNames = lastTools.map(function(t){ return t.name; }).filter(Boolean).join(", ");
+    apiCall("/api/objective", {
+      dept: c.dept, name: c.name, desc: c.desc,
+      credit: inCredit.value, hours: inHours.value, toolNames: toolNames
+    }).then(function(res){
+      objectiveText = ((res && res.text) || "").trim();
+      $("objective-text").value = objectiveText;
+      $("objective-box").hidden = false;
+      $("btn-copy-objective").hidden = !objectiveText;
+    }).catch(function(e){
+      $("objective-msg").innerHTML = '<div class="msg error">' + escapeHtml(apiErrorMessage(e)) + '</div>';
+    }).finally(function(){
+      writingObjective = false;
+      btn.disabled = !currentCourse();
+      btn.textContent = orig;
+    });
+  });
+
+  $("objective-text").addEventListener("input", function(){ objectiveText = $("objective-text").value; });
+  $("btn-copy-objective").addEventListener("click", function(){ copyText(objectiveText, $("btn-copy-objective")); });
+
+  // ============================================================
+  // Step 4 — 5개 주차 선택 (패턴/랜덤) + 제안 문구 생성
+  // ============================================================
+  function computeSpreadWeeks(n, total){
+    var set = new Set();
+    for (var i = 1; i <= n; i++){
+      var w = Math.round(i * total / (n + 1));
+      if (w < 1) w = 1;
+      if (w > total) w = total;
+      while (set.has(w) && w < total) w++;
+      while (set.has(w) && w > 1) w--;
+      set.add(w);
+    }
+    return Array.from(set).sort(function(a,b){ return a-b; });
+  }
+  function computeRandomWeeks(n, total){
+    var pool = [];
+    for (var w = 1; w <= total; w++) pool.push(w);
+    for (var i = pool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    return pool.slice(0, Math.min(n, total)).sort(function(a,b){ return a-b; });
+  }
+
+  $("btn-apply-pattern").addEventListener("click", function(){
+    var weeks = (recommendedWeeks.length === WEEKS_TARGET) ? recommendedWeeks : computeSpreadWeeks(WEEKS_TARGET, totalWeeks);
+    chosenWeeks = new Set(weeks);
+    renderWeekGrid();
+  });
+  $("btn-random-weeks").addEventListener("click", function(){
+    chosenWeeks = new Set(computeRandomWeeks(WEEKS_TARGET, totalWeeks));
+    renderWeekGrid();
+  });
+
+  function renderWeekGrid(){
+    var grid = $("week-grid");
+    grid.innerHTML = "";
+    for (var w = 1; w <= totalWeeks; w++){
+      (function(w){
+        var b = el("button", "week-btn");
+        b.type = "button";
+        b.textContent = w;
+        if (recommendedWeeks.indexOf(w) !== -1) b.classList.add("recommended");
+        if (chosenWeeks.has(w)) b.classList.add("selected");
+        b.addEventListener("click", function(){ toggleWeek(w); });
+        grid.appendChild(b);
+      })(w);
+    }
+    $("week-count-num").textContent = chosenWeeks.size;
+    $("btn-generate").disabled = chosenWeeks.size !== WEEKS_TARGET || !currentCourse();
+  }
+
+  function toggleWeek(w){
+    if (chosenWeeks.has(w)){
+      chosenWeeks.delete(w);
+    } else {
+      if (chosenWeeks.size >= WEEKS_TARGET){
+        $("generate-msg").innerHTML = '<div class="msg info">이미 ' + WEEKS_TARGET + '개 주차가 선택되었습니다. 다른 주차를 선택하려면 먼저 하나를 해제하세요.</div>';
+        setTimeout(function(){ $("generate-msg").innerHTML = ""; }, 2200);
+        return;
+      }
+      chosenWeeks.add(w);
+    }
+    renderWeekGrid();
+  }
+
+  $("btn-generate").addEventListener("click", function(){
+    var c = currentCourse();
+    if (!c || chosenWeeks.size !== WEEKS_TARGET || generating) return;
+    generating = true;
+    var btn = $("btn-generate");
+    btn.disabled = true; var orig = btn.textContent;
+    btn.innerHTML = '<span class="spinner"></span> 제안 문구 생성 중… (최대 1~2분)';
+    $("generate-msg").innerHTML = "";
+    $("result-grid").innerHTML = "";
+    $("btn-copy-all").hidden = true;
+
+    var weeks = Array.from(chosenWeeks).sort(function(a,b){ return a-b; });
+    var toolNames = lastTools.map(function(t){ return t.name; }).filter(Boolean).join(", ");
+
+    apiCall("/api/weekly", {
+      dept: c.dept, name: c.name, desc: c.desc, totalWeeks: totalWeeks, weeks: weeks, toolNames: toolNames
+    }).then(function(data){
+      if (!Array.isArray(data) || !data.length) throw { message: "생성 결과가 비어 있습니다." };
+      lastWeekly = data.map(function(d){
+        return {
+          week: Number(d.week) || 0,
+          expectedTopic: String(d.expectedTopic || ""),
+          suggestion: String(d.suggestion || "")
+        };
+      }).sort(function(a,b){ return a.week - b.week; });
+      renderResults();
+      $("btn-copy-all").hidden = false;
+      saveResult(c, weeks);
+    }).catch(function(e){
+      $("generate-msg").innerHTML = '<div class="msg error">' + escapeHtml(apiErrorMessage(e)) + '</div>';
+    }).finally(function(){
+      generating = false;
+      btn.disabled = chosenWeeks.size !== WEEKS_TARGET;
+      btn.textContent = orig;
+    });
+  });
+
+  function weekBlockText(w){
+    return "[" + w.week + "주차] (예상 진도: " + w.expectedTopic + ")\nAI 활용 제안: " + w.suggestion;
+  }
+
+  function renderResults(){
+    var grid = $("result-grid");
+    grid.innerHTML = "";
+    (lastWeekly || []).forEach(function(w){
+      var card = el("div", "week-result");
+      var head = el("div", "wk-head");
+      head.appendChild(el("span", null, w.week + "주차"));
+      head.appendChild(el("span", "topic", w.expectedTopic));
+      var copyBtn = el("button", "btn small ghost", "복사");
+      copyBtn.style.color = "inherit"; copyBtn.style.borderColor = "rgba(255,255,255,.5)";
+      copyBtn.addEventListener("click", function(){ copyText(weekBlockText(w), copyBtn); });
+      head.appendChild(copyBtn);
+      card.appendChild(head);
+
+      var body = el("div", "wk-body");
+      var f = el("div", "wk-field");
+      f.appendChild(el("label", null, "AI 활용 제안 문장"));
+      var ta = document.createElement("textarea");
+      ta.value = w.suggestion; ta.rows = 3;
+      ta.addEventListener("input", function(){ w.suggestion = ta.value; });
+      f.appendChild(ta);
+      body.appendChild(f);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+
+  $("btn-copy-all").addEventListener("click", function(){
+    if (!lastWeekly) return;
+    var parts = [];
+    if (objectiveText) parts.push("[교육목표]\n" + objectiveText);
+    parts.push("[주차별 AI 활용 제안]\n" + lastWeekly.map(weekBlockText).join("\n\n"));
+    copyText(parts.join("\n\n"), $("btn-copy-all"));
+  });
+
+  // ---------- Save + history (localStorage) ----------
+  function saveResult(c, weeks){
+    var list = loadHistoryAll();
+    list.unshift({
+      id: "h" + Date.now() + Math.random().toString(36).slice(2,7),
+      dept: c.dept, courseId: c.id, courseName: c.name,
+      weeks: weeks, totalWeeks: totalWeeks,
+      objective: objectiveText,
+      weekly: lastWeekly,
+      tools: lastTools,
+      createdAt: new Date().toISOString()
+    });
+    if (list.length > 500) list.length = 500;
+    saveHistoryAll(list);
+    $("generate-msg").innerHTML = '<div class="msg saved">이력에 저장되었습니다 (이 브라우저).</div>';
+    loadHistory();
+  }
+
+  function loadHistory(){
+    if (!selectedCourseId) return;
+    var all = loadHistoryAll().filter(function(h){ return h.courseId === selectedCourseId; }).slice(0, 5);
+    var list = $("history-list");
+    list.innerHTML = "";
+    if (!all.length){ $("card-history").hidden = true; return; }
+    $("card-history").hidden = false;
+    all.forEach(function(data){
+      var row = el("div", "history-row");
+      var weeksTxt = (data.weeks || []).map(function(w){ return w + "주"; }).join(", ");
+      row.appendChild(el("span", "weeks", weeksTxt));
+      var loadBtn = el("button", "btn small ghost", "불러오기");
+      loadBtn.addEventListener("click", function(){
+        objectiveText = data.objective || "";
+        $("objective-text").value = objectiveText;
+        $("objective-box").hidden = !objectiveText;
+        $("btn-copy-objective").hidden = !objectiveText;
+        lastWeekly = data.weekly || [];
+        chosenWeeks = new Set(data.weeks || []);
+        renderWeekGrid();
+        renderResults();
+        $("btn-copy-all").hidden = !lastWeekly.length;
+      });
+      row.appendChild(loadBtn);
+      var date = el("span", "date", (data.createdAt || "").slice(0,10));
+      row.appendChild(date);
+      list.appendChild(row);
+    });
+  }
+
+  // ============================================================
+  // 관리자 화면
+  // ============================================================
+  $("btn-add-course").addEventListener("click", function(){
+    var dept = $("a-dept").value.trim();
+    var name = $("a-name").value.trim();
+    var desc = $("a-desc").value.trim();
+    if (!dept || !name){
+      $("admin-msg").innerHTML = '<div class="msg error">학과와 교과목명을 입력하세요.</div>';
+      return;
+    }
+    overrides.added.push({ id: "local-" + Date.now() + Math.random().toString(36).slice(2,7), dept: dept, name: name, desc: desc });
+    saveOverrides();
+    refreshCourses();
+    $("a-dept").value = ""; $("a-name").value = ""; $("a-desc").value = "";
+    $("admin-msg").innerHTML = '<div class="msg saved">추가되었습니다 (이 브라우저).</div>';
+    renderAdmin();
+  });
+
+  var bulkParsed = [];
+  $("btn-bulk-preview").addEventListener("click", function(){
+    var raw = $("bulk-input").value;
+    var lines = raw.split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+    bulkParsed = lines.map(function(l){
+      var parts = l.indexOf("\t") !== -1 ? l.split("\t") : l.split(",");
+      return { dept: (parts[0]||"").trim(), name: (parts[1]||"").trim(), desc: (parts[2]||"").trim() };
+    }).filter(function(r){ return r.dept && r.name; });
+    var box = $("bulk-preview");
+    if (!bulkParsed.length){
+      box.innerHTML = '<div class="msg error">인식된 항목이 없습니다. 형식을 확인하세요.</div>';
+      $("btn-bulk-add").hidden = true;
+      return;
+    }
+    var wrap = el("div", "table-wrap");
+    var t = el("table", "data");
+    t.innerHTML = "<thead><tr><th>학과</th><th>교과목명</th><th>설명</th></tr></thead>";
+    var tb = el("tbody");
+    bulkParsed.forEach(function(r){
+      var tr = el("tr");
+      tr.appendChild(el("td", null, r.dept));
+      tr.appendChild(el("td", null, r.name));
+      tr.appendChild(el("td", null, r.desc));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); wrap.appendChild(t);
+    box.innerHTML = "";
+    box.appendChild(el("div", "msg info", bulkParsed.length + "개 항목을 인식했습니다. 확인 후 추가하세요."));
+    box.appendChild(wrap);
+    $("btn-bulk-add").hidden = false;
+  });
+
+  $("btn-bulk-add").addEventListener("click", function(){
+    if (!bulkParsed.length) return;
+    var existing = new Set(courses.map(function(c){ return c.dept + "|" + c.name; }));
+    var toAdd = bulkParsed.filter(function(r){ return !existing.has(r.dept + "|" + r.name); });
+    toAdd.forEach(function(r, i){
+      overrides.added.push({ id: "local-" + Date.now() + i + Math.random().toString(36).slice(2,5), dept: r.dept, name: r.name, desc: r.desc || "" });
+    });
+    saveOverrides();
+    refreshCourses();
+    $("bulk-preview").innerHTML = '<div class="msg saved">' + toAdd.length + '개 항목을 추가했습니다' + (toAdd.length < bulkParsed.length ? " (중복 " + (bulkParsed.length - toAdd.length) + "개 제외)" : "") + ' (이 브라우저).</div>';
+    $("btn-bulk-add").hidden = true;
+    $("bulk-input").value = "";
+    bulkParsed = [];
+    renderAdmin();
+  });
+
+  $("btn-export-courses").addEventListener("click", function(){
+    var payload = courses.map(function(c){ return { id: c.id, dept: c.dept, name: c.name, desc: c.desc || "" }; });
+    downloadJson(payload, "courses.json");
+    $("data-msg").innerHTML = '<div class="msg saved">courses.json을 내보냈습니다. 저장소의 파일을 교체 후 커밋·재배포하세요.</div>';
+  });
+  $("btn-export-history").addEventListener("click", function(){
+    downloadJson(loadHistoryAll(), "xai-history-export.json");
+    $("data-msg").innerHTML = '<div class="msg saved">이력을 내보냈습니다.</div>';
+  });
+  function downloadJson(obj, filename){
+    var blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function renderAdmin(){
+    $("stat-depts").textContent = new Set(courses.map(function(c){ return c.dept; })).size;
+    $("stat-courses").textContent = courses.length;
+
+    var dl = $("dept-list");
+    dl.innerHTML = "";
+    Array.from(new Set(courses.map(function(c){ return c.dept; }))).forEach(function(d){
+      dl.appendChild(new Option(d, d));
+    });
+
+    var body = $("course-table-body");
+    body.innerHTML = "";
+    courses.forEach(function(c){
+      var isLocal = String(c.id).indexOf("local-") === 0;
+      var isEdited = !!overrides.edited[c.id];
+      var tr = el("tr");
+      var tdDept = el("td", "dept-cell");
+      var tdName = el("td"); var tdDesc = el("td");
+      [["dept", tdDept], ["name", tdName], ["desc", tdDesc]].forEach(function(pair){
+        var input = document.createElement("input");
+        input.className = "row-input"; input.type = "text"; input.value = c[pair[0]] || "";
+        input.addEventListener("change", function(){
+          if (isLocal){
+            var item = overrides.added.find(function(a){ return a.id === c.id; });
+            if (item) item[pair[0]] = input.value;
+          } else {
+            overrides.edited[c.id] = overrides.edited[c.id] || {};
+            overrides.edited[c.id][pair[0]] = input.value;
+          }
+          saveOverrides();
+          refreshCourses();
+        });
+        pair[1].appendChild(input);
+      });
+      if (isLocal){ tdName.appendChild(el("span","local-tag","로컬")); }
+      else if (isEdited){ tdName.appendChild(el("span","local-tag","수정됨")); }
+      var tdDel = el("td");
+      var delBtn = el("button", "btn small ghost", "삭제");
+      delBtn.addEventListener("click", function(){
+        if (!confirm(c.name + " 교과목을 삭제할까요? (이 브라우저에서만 숨겨집니다)")) return;
+        if (isLocal){
+          overrides.added = overrides.added.filter(function(a){ return a.id !== c.id; });
+        } else {
+          overrides.deleted.push(c.id);
+        }
+        saveOverrides();
+        refreshCourses();
+        renderAdmin();
+      });
+      tdDel.appendChild(delBtn);
+      tr.appendChild(tdDept); tr.appendChild(tdName); tr.appendChild(tdDesc); tr.appendChild(tdDel);
+      body.appendChild(tr);
+    });
+
+    var all = loadHistoryAll();
+    $("stat-results").textContent = all.length;
+    var hb = $("all-history-body");
+    hb.innerHTML = "";
+    all.slice(0, 50).forEach(function(data){
+      var tr = el("tr");
+      tr.appendChild(el("td", null, data.dept || ""));
+      tr.appendChild(el("td", null, data.courseName || ""));
+      tr.appendChild(el("td", null, (data.weeks||[]).map(function(w){return w+"주";}).join(", ")));
+      tr.appendChild(el("td", null, (data.createdAt||"").slice(0,10)));
+      hb.appendChild(tr);
+    });
+  }
+
+  function refreshCourses(){
+    courses = computeEffectiveCourses();
+    courses.sort(function(a,b){ return (a.dept+a.name).localeCompare(b.dept+b.name, "ko"); });
+    renderDeptOptions();
+  }
+
+  // ============================================================
+  // Boot
+  // ============================================================
+  function boot(){
+    fetch("./courses.json").then(function(r){ return r.json(); }).then(function(data){
+      baseCourses = Array.isArray(data) ? data : [];
+      refreshCourses();
+      renderWeekGrid();
+      $("btn-suggest").disabled = !currentCourse();
+      $("btn-objective").disabled = !currentCourse();
+    }).catch(function(){
+      showBanner("교과목 목록(courses.json)을 불러오지 못했습니다. 파일이 함께 배포되었는지 확인해 주세요.");
+      refreshCourses();
+      renderWeekGrid();
+    });
+  }
+
+  renderWeekGrid();
+  boot();
+})();
+</script>
+</body>
+</html>
