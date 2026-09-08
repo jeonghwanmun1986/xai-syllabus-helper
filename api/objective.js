@@ -2,7 +2,9 @@
 // body: { dept, name, desc, credit, hours, toolNames }
 // returns: { text: "..." }  (a single-paragraph 교육목표)
 //
-// Requires the ANTHROPIC_API_KEY environment variable (see api/suggest.js).
+// Requires the GEMINI_API_KEY environment variable (see api/suggest.js).
+
+var MODEL = "gemini-2.5-flash";
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -10,9 +12,9 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: "missing_api_key", message: "ANTHROPIC_API_KEY가 설정되지 않았습니다. Vercel 프로젝트 환경변수에 추가해주세요." });
+    res.status(500).json({ error: "missing_api_key", message: "GEMINI_API_KEY가 설정되지 않았습니다. Vercel 프로젝트 환경변수에 추가해주세요." });
     return;
   }
 
@@ -47,31 +49,34 @@ module.exports = async function handler(req, res) {
     "위 예시처럼 '핵심 학습내용을 N시간 학습하고, 실습용 PC와 [구체적 도구]를 활용하여 [적용 내용]을 학습함' 구조의 한 문단(전체 3~4문장 이내, '~함'으로 끝나는 문어체)으로 작성하세요. 문단 텍스트만 출력하고 다른 설명은 덧붙이지 마세요.";
 
   try {
-    const text = await callClaudeText(apiKey, prompt, 700);
+    const text = await callGeminiText(apiKey, prompt, 700);
     res.status(200).json({ text: text.trim() });
   } catch (e) {
     res.status(502).json({ error: "upstream_error", message: String((e && e.message) || e) });
   }
 };
 
-async function callClaudeText(apiKey, prompt, maxTokens) {
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+async function callGeminiText(apiKey, prompt, maxTokens) {
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+  const resp = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01"
+      "x-goog-api-key": apiKey
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: maxTokens || 700,
-      messages: [{ role: "user", content: prompt }]
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: maxTokens || 700 }
     })
   });
   if (!resp.ok) {
     const t = await resp.text().catch(function () { return ""; });
-    throw new Error("Anthropic API " + resp.status + ": " + t.slice(0, 300));
+    throw new Error("Gemini API " + resp.status + ": " + t.slice(0, 300));
   }
   const json = await resp.json();
-  return (json.content || []).map(function (b) { return b.text || ""; }).join("");
+  const candidate = (json.candidates || [])[0];
+  const text = ((candidate && candidate.content && candidate.content.parts) || [])
+    .map(function (p) { return p.text || ""; }).join("");
+  if (!text) throw new Error("empty_response");
+  return text;
 }
