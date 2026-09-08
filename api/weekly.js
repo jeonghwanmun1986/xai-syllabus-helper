@@ -2,9 +2,10 @@
 // body: { dept, name, desc, totalWeeks, weeks: [n,n,n,n,n], toolNames: "A, B, C" }
 // returns: [ {week, expectedTopic, suggestion}, ... ]  (length == weeks.length)
 //
-// Requires the ANTHROPIC_API_KEY environment variable (see api/suggest.js).
+// Requires the GEMINI_API_KEY environment variable (see api/suggest.js).
 
 var WEEKS_TARGET = 5;
+var MODEL = "gemini-2.5-flash";
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -12,9 +13,9 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: "missing_api_key", message: "ANTHROPIC_API_KEY가 설정되지 않았습니다. Vercel 프로젝트 환경변수에 추가해주세요." });
+    res.status(500).json({ error: "missing_api_key", message: "GEMINI_API_KEY가 설정되지 않았습니다. Vercel 프로젝트 환경변수에 추가해주세요." });
     return;
   }
 
@@ -53,7 +54,7 @@ module.exports = async function handler(req, res) {
     '[ {"week": 숫자, "expectedTopic": "...", "suggestion": "..."}, ... ]';
 
   try {
-    const data = await callClaude(apiKey, prompt, 2000);
+    const data = await callGemini(apiKey, prompt, 2000);
     if (!Array.isArray(data) || !data.length) throw new Error("empty_result");
     res.status(200).json(data);
   } catch (e) {
@@ -61,26 +62,28 @@ module.exports = async function handler(req, res) {
   }
 };
 
-async function callClaude(apiKey, prompt, maxTokens) {
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+async function callGemini(apiKey, prompt, maxTokens) {
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+  const resp = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01"
+      "x-goog-api-key": apiKey
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: maxTokens || 2000,
-      messages: [{ role: "user", content: prompt }]
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: maxTokens || 2000, responseMimeType: "application/json" }
     })
   });
   if (!resp.ok) {
     const t = await resp.text().catch(function () { return ""; });
-    throw new Error("Anthropic API " + resp.status + ": " + t.slice(0, 300));
+    throw new Error("Gemini API " + resp.status + ": " + t.slice(0, 300));
   }
   const json = await resp.json();
-  const text = (json.content || []).map(function (b) { return b.text || ""; }).join("");
+  const candidate = (json.candidates || [])[0];
+  const text = ((candidate && candidate.content && candidate.content.parts) || [])
+    .map(function (p) { return p.text || ""; }).join("");
+  if (!text) throw new Error("empty_response");
   return parseJsonLoose(text);
 }
 
