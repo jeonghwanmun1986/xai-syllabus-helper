@@ -2,20 +2,30 @@
 // body: { dept, name, desc, totalWeeks, weeks: [n,n,n,n,n], toolNames: "A, B, C" }
 // returns: [ {week, expectedTopic, suggestion}, ... ]  (length == weeks.length)
 //
-// Requires the GEMINI_API_KEY environment variable (see api/suggest.js).
+// Fully rule-based (template) generator -- no external AI API, no API key,
+// no cost. Picks a topic label and a sentence template based on how far
+// into the semester each selected week falls.
 
+var tpl = require("./_lib/templates");
 var WEEKS_TARGET = 5;
-var MODEL = "gemini-2.5-flash";
+
+var TOPIC_LABELS = {
+  early: ["기초 개념 이해", "기본 이론과 배경", "핵심 용어와 원리 정리"],
+  mid: ["실습 및 응용", "사례 분석과 적용 연습", "실무 데이터 다루기"],
+  late: ["심화 프로젝트", "결과물 제작 및 발표 준비", "종합 실습과 피드백"]
+};
+
+var VERB_TEMPLATES = [
+  "{tool}로 {topic} 관련 예시를 함께 만들어보고 결과를 비교·분석하도록 한다.",
+  "{tool}를 활용해 관련 자료를 요약·정리한 뒤 발표 자료에 반영하도록 한다.",
+  "{tool}로 초안을 생성한 후 학생들이 직접 검토·수정하며 개선점을 찾도록 한다.",
+  "{tool}를 활용해 실습 결과를 점검하고 개선 아이디어를 도출하도록 한다.",
+  "{tool}로 관련 사례를 조사한 뒤 토의 자료로 활용하도록 한다."
+];
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
-    return;
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: "missing_api_key", message: "GEMINI_API_KEY가 설정되지 않았습니다. Vercel 프로젝트 환경변수에 추가해주세요." });
     return;
   }
 
@@ -25,12 +35,11 @@ module.exports = async function handler(req, res) {
   }
   const dept = String((body && body.dept) || "").slice(0, 200);
   const name = String((body && body.name) || "").slice(0, 200);
-  const desc = String((body && body.desc) || "").slice(0, 500);
   const totalWeeks = Math.max(8, Math.min(20, Number((body && body.totalWeeks) || 15)));
   const weeks = Array.isArray(body && body.weeks)
     ? body.weeks.map(Number).filter(function (n) { return n >= 1 && n <= totalWeeks; }).slice(0, WEEKS_TARGET)
     : [];
-  const toolNames = String((body && body.toolNames) || "").slice(0, 300);
+  const toolNamesRaw = String((body && body.toolNames) || "").slice(0, 300);
 
   if (!dept || !name || weeks.length !== WEEKS_TARGET) {
     res.status(400).json({ error: "invalid_request", message: "학과, 교과목명과 정확히 " + WEEKS_TARGET + "개의 주차가 필요합니다." });
@@ -38,67 +47,29 @@ module.exports = async function handler(req, res) {
   }
   const sortedWeeks = weeks.slice().sort(function (a, b) { return a - b; });
 
-  const prompt =
-    "당신은 한국 대학의 NCS 교과목에 AI 활용을 제안하는 전문가입니다.\n" +
-    "아래 교과목의 지정된 주차마다, 그 주차에 일반적으로 다뤄질 만한 학습 내용을 예상하고, AI를 어떻게 활용하면 좋을지 한두 문장으로 제안하세요. 교수님이 기존 강의계획서에 그대로 덧붙여 적을 수 있도록 간결하게 작성하세요.\n\n" +
-    "- 학과: " + dept + "\n" +
-    "- 교과목명: " + name + "\n" +
-    "- 교과목 설명(있는 경우): " + (desc || "없음") + "\n" +
-    "- 총 강의 주차 수: " + totalWeeks + "주\n" +
-    "- 대상 주차: " + sortedWeeks.join(", ") + "주차\n" +
-    "- 참고할 추천 AI 툴(자유롭게 선택 가능): " + (toolNames || "자유 선택") + "\n\n" +
-    "각 주차마다 다음을 작성하세요:\n" +
-    '1. expectedTopic: 그 주차에 일반적으로 다뤄질 만한 학습 내용을 5~15자 내외로 짧게 (예: "포인터와 배열 활용")\n' +
-    "2. suggestion: 학과 특성·교과목명 특성·추천 AI 툴을 반영해 이 주차에 AI를 어떻게 활용하면 좋을지 한두 문장으로 제안 (교수님이 강의계획서에 그대로 붙여넣을 수 있는 문장체로, '~한다' 또는 '~하도록 한다'로 끝내기)\n\n" +
-    "다음 JSON 배열 형식으로만 답하세요 (다른 설명 없이), week 오름차순으로 " + sortedWeeks.length + "개 항목:\n" +
-    '[ {"week": 숫자, "expectedTopic": "...", "suggestion": "..."}, ... ]';
-
   try {
-    const data = await callGemini(apiKey, prompt, 2000);
-    if (!Array.isArray(data) || !data.length) throw new Error("empty_result");
-    res.status(200).json(data);
+    var toolList = toolNamesRaw
+      ? toolNamesRaw.split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+      : tpl.matchTools(dept, name).map(function (t) { return t.name; });
+    if (!toolList.length) toolList = tpl.DEFAULT_TOOLS.map(function (t) { return t.name; });
+
+    var result = sortedWeeks.map(function (week, idx) {
+      var frac = week / totalWeeks;
+      var band = frac < 0.35 ? "early" : (frac < 0.7 ? "mid" : "late");
+      var labels = TOPIC_LABELS[band];
+      var topicLabel = labels[idx % labels.length];
+      var expectedTopic = name + " " + topicLabel;
+      if (expectedTopic.length > 15) expectedTopic = topicLabel; // keep it short per spec (5~15자 내외)
+
+      var tool = toolList[idx % toolList.length];
+      var verbTpl = VERB_TEMPLATES[idx % VERB_TEMPLATES.length];
+      var suggestion = verbTpl.replace("{tool}", tool).replace("{topic}", topicLabel);
+
+      return { week: week, expectedTopic: expectedTopic, suggestion: suggestion };
+    });
+
+    res.status(200).json(result);
   } catch (e) {
-    res.status(502).json({ error: "upstream_error", message: String((e && e.message) || e) });
+    res.status(500).json({ error: "internal_error", message: String((e && e.message) || e) });
   }
 };
-
-async function callGemini(apiKey, prompt, maxTokens) {
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-goog-api-key": apiKey
-    },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: maxTokens || 2000, responseMimeType: "application/json" }
-    })
-  });
-  if (!resp.ok) {
-    const t = await resp.text().catch(function () { return ""; });
-    throw new Error("Gemini API " + resp.status + ": " + t.slice(0, 300));
-  }
-  const json = await resp.json();
-  const candidate = (json.candidates || [])[0];
-  const text = ((candidate && candidate.content && candidate.content.parts) || [])
-    .map(function (p) { return p.text || ""; }).join("");
-  if (!text) throw new Error("empty_response");
-  return parseJsonLoose(text);
-}
-
-function parseJsonLoose(text) {
-  try { return JSON.parse(text); } catch (e) { /* fall through */ }
-  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) {
-    try { return JSON.parse(fence[1]); } catch (e) { /* fall through */ }
-  }
-  const start = text.search(/[\{\[]/);
-  const endBrace = text.lastIndexOf("}");
-  const endBracket = text.lastIndexOf("]");
-  const end = Math.max(endBrace, endBracket);
-  if (start !== -1 && end !== -1 && end > start) {
-    try { return JSON.parse(text.slice(start, end + 1)); } catch (e) { /* fall through */ }
-  }
-  throw new Error("AI 응답을 JSON으로 해석하지 못했습니다.");
-}
