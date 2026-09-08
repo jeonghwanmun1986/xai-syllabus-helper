@@ -495,7 +495,7 @@
     });
   }
   function apiErrorMessage(e){
-    if (e && e.code === "missing_api_key") return "이 배포에는 아직 Anthropic API 키가 설정되지 않았습니다. Vercel 프로젝트에 ANTHROPIC_API_KEY를 추가해 주세요 (README 참고).";
+    if (e && e.code === "missing_api_key") return "이 배포에는 아직 Gemini API 키가 설정되지 않았습니다. Vercel 프로젝트에 GEMINI_API_KEY를 추가해 주세요 (README 참고).";
     return (e && e.message) || "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   }
 
